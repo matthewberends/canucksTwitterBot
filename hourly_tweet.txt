@@ -1,0 +1,4 @@
+#Canucks Twitter Hourly Update:
+
+Most Active User: {} ({} tweets)
+Most Mentioned User: {} ({} mentions)

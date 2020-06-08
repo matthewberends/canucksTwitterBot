@@ -2,6 +2,8 @@ import json
 import requests
 import base64
 
+from requests_oauthlib import OAuth1Session
+
 from datetime import datetime, timedelta
 
 from stop_words import stop_words
@@ -40,6 +42,12 @@ def get_bearer_token():
 	auth_resp = requests.post(auth_url, headers=auth_headers, data=auth_data)
 	return auth_resp.json()['access_token']
 
+def get_user_auth_session():
+	creds = read_credentials()
+
+	session = OAuth1Session(creds['api_key'], creds['api_secret'], creds['token'], creds['token_secret'])
+	return session
+
 def tweets_of_last_hour():
 	bearer = get_bearer_token()
 	search_url = '{}1.1/search/tweets.json'.format(base_url)
@@ -69,7 +77,6 @@ def tweets_of_last_hour():
 		new_tweet_data.pop(-1)
 	tweet_data.extend(new_tweet_data)
 
-	print(len(tweet_data))
 	return tweet_data
 
 def get_max_id(tweet_data):
@@ -81,7 +88,7 @@ def get_max_id(tweet_data):
 
 def within_an_hour(tweet):
 	tweet_dt = datetime.strptime(tweet['created_at'],'%a %b %d %H:%M:%S +0000 %Y')
-	return tweet_dt > (datetime.now() - timedelta(hours = 1))
+	return tweet_dt > (datetime.utcnow() - timedelta(hours = 1))
 
 def process_data(tweet_data):
 	processed_data = {}
@@ -125,18 +132,41 @@ def process_data(tweet_data):
 
 def get_most_common_word(data):
 	counts = data['word_counts']
-	return max(counts, key=counts.get)
+	word = max(counts, key=counts.get)
+	return word, counts[word]
 
 def get_most_mentioned_user(data):
 	counts = data['mentioned_counts']
-	return max(counts, key=counts.get)
+	user = max(counts, key=counts.get)
+	return user, counts[user]
 
 def get_most_active_user(data):
 	counts = data['user_post_counts']
-	return max(counts, key=counts.get)
+	user =  max(counts, key=counts.get)
+	return user, counts[user]
+
+def compose_tweet(text):
+	user_session = get_user_auth_session()
+	post_url = "{}1.1/statuses/update.json".format(base_url)
+	params = {'status' : text}
+	resp = user_session.post(post_url, data=params)
+	if resp.status_code == 200:
+		print("Tweeted this:\n {}".format(text))
+
+def form_hourly_update():
+	template_file = open("hourly_tweet.txt","r")
+	tweet_txt = template_file.read()
+	template_file.close()
+
+	pdata = process_data(tweets_of_last_hour())
+	most_mentioned, mentioned_count = get_most_mentioned_user(pdata)
+	most_active, tweet_count = get_most_active_user(pdata)
+
+	tweet_txt = tweet_txt.format(most_active, tweet_count, most_mentioned, mentioned_count)
+	print(tweet_txt)
+	return tweet_txt
 
 tweet_data = tweets_of_last_hour()
 pdata = process_data(tweet_data)
-print(get_most_common_word(pdata))
-print(get_most_mentioned_user(pdata))
-print(get_most_active_user(pdata))
+
+compose_tweet(form_hourly_update())
