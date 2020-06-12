@@ -5,6 +5,7 @@ import base64
 from requests_oauthlib import OAuth1Session
 
 from datetime import datetime, timedelta
+import time
 
 from stop_words import stop_words
 
@@ -166,7 +167,12 @@ def form_hourly_update():
 	print(tweet_txt)
 	return tweet_txt
 
-tweet_data = tweets_of_last_hour()
-pdata = process_data(tweet_data)
 
-compose_tweet(form_hourly_update())
+while 1:
+	tweet_data = tweets_of_last_hour()
+	pdata = process_data(tweet_data)
+	compose_tweet(form_hourly_update())
+	
+	dt = datetime.now() + timedelta(hours=1)
+	while datetime.now() < dt:
+		time.sleep(30)
