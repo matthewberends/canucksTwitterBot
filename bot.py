@@ -99,6 +99,10 @@ def process_data(tweet_data):
 	user_post_counts = {}
 	
 	for tweet in tweet_data:
+		#Don't process tweets from myself
+		if (tweet['user']['screen_name'] == "BotCanucks"):
+			continue
+
 		# Collect most common words
 		for word in tweet['text'].split(' '):
 			lower_word = word.lower()
@@ -118,12 +122,11 @@ def process_data(tweet_data):
 				mentioned_counts[user_name] = 1
 
 		# Get most active user
-		for x in tweet_data:
-			user_name = tweet['user']['screen_name']
-			if user_name in user_post_counts:
-				user_post_counts[user_name] = user_post_counts[user_name] + 1
-			else:
-				user_post_counts[user_name] = 1
+		user_name = tweet['user']['screen_name']
+		if user_name in user_post_counts:
+			user_post_counts[user_name] = user_post_counts[user_name] + 1
+		else:
+			user_post_counts[user_name] = 1
 
 	processed_data['word_counts'] = word_counts
 	processed_data['mentioned_counts'] = mentioned_counts
