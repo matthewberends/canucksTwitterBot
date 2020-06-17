@@ -141,11 +141,15 @@ def get_most_common_word(data):
 
 def get_most_mentioned_user(data):
 	counts = data['mentioned_counts']
+	if (len(counts) == 0):
+		return "None", 0
 	user = max(counts, key=counts.get)
 	return user, counts[user]
 
 def get_most_active_user(data):
 	counts = data['user_post_counts']
+	if (len(counts) == 0):
+		return "None" , 0
 	user =  max(counts, key=counts.get)
 	return user, counts[user]
 
