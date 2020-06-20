@@ -176,10 +176,9 @@ def form_hourly_update():
 
 
 while 1:
-	tweet_data = tweets_of_last_hour()
-	pdata = process_data(tweet_data)
 	compose_tweet(form_hourly_update())
 	
 	dt = datetime.now() + timedelta(hours=1)
 	while datetime.now() < dt:
 		time.sleep(30)
+
